@@ -9,7 +9,7 @@ public class GameLiftServerExampleBehavior : MonoBehaviour
    //This is an example of a simple integration with GameLift server SDK that will make game server processes go active on GameLift!
    public void Start()
    {
-      Debug.Log("start called");
+      Debug.Log("GameLiftServerExampleBehavior start called");
       //Identify port number (hard coded here for simplicity) the game server is listening on for player connections
       var listeningPort = 7777;
 
