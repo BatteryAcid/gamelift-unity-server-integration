@@ -1,15 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Aws.GameLift.Server;
+using Amazon.CloudWatchLogs;
+using Amazon.CloudWatchLogs.Model;
+using BADLogger;
 
+// TODO: remove CW prefix on logs
 public class GameLiftServerExampleBehavior : MonoBehaviour
 {
+   private string _logGroupName;
+   private string _logStreamName;
+   private AmazonCloudWatchLogsClient _amazonCloudWatchLogsClient;
+   private List<InputLogEvent> logEvents;
+   private IBADLogger _logger;
 
    //This is an example of a simple integration with GameLift server SDK that will make game server processes go active on GameLift!
    public void Start()
    {
-      Debug.Log("GameLiftServerExampleBehavior start called");
+      _logger = LogFactory.Instance;
+      _logger.Log("GameLiftServerExampleBehavior start called");
+
       //Identify port number (hard coded here for simplicity) the game server is listening on for player connections
       var listeningPort = 7777;
 
@@ -24,7 +34,7 @@ public class GameLiftServerExampleBehavior : MonoBehaviour
                //Here is where a game server should take action based on the game session object.
                //Once the game server is ready to receive incoming player connections, it should invoke GameLiftServerAPI.ActivateGameSession()
 
-               Debug.Log("gameSession: ActivateGameSession");
+               _logger.Log("gameSession: ActivateGameSession");
 
                GameLiftServerAPI.ActivateGameSession();
             },
@@ -34,15 +44,15 @@ public class GameLiftServerExampleBehavior : MonoBehaviour
                //server containing the updated game session object.  The game server can then examine the provided
                //matchmakerData and handle new incoming players appropriately.
                //updateReason is the reason this update is being supplied.
-               Debug.Log("updateGameSession: " + updateGameSession.ToString());
+               _logger.Log("updateGameSession" + updateGameSession.ToString());
             },
             () =>
             {
                //OnProcessTerminate callback. GameLift will invoke this callback before shutting down an instance hosting this game server.
                //It gives this game server a chance to save its state, communicate with services, etc., before being shut down.
                //In this case, we simply tell GameLift we are indeed going to shutdown.
-               
-               Debug.Log("ProcessEnding");
+
+               _logger.Log("ProcessEnding");
 
                GameLiftServerAPI.ProcessEnding();
             },
@@ -61,7 +71,7 @@ public class GameLiftServerExampleBehavior : MonoBehaviour
             {
                //Here, the game server tells GameLift what set of files to upload when the game session ends.
                //GameLift will upload everything specified here for the developers to fetch later.
-               "/local/game/logs/myserver.log"
+               "/local/game/logs/server.log"
             })
          );
 
@@ -69,16 +79,16 @@ public class GameLiftServerExampleBehavior : MonoBehaviour
          var processReadyOutcome = GameLiftServerAPI.ProcessReady(processParameters);
          if (processReadyOutcome.Success)
          {
-            print("ProcessReady success.");
+            _logger.Log("ProcessReady success.");
          }
          else
          {
-            print("ProcessReady failure : " + processReadyOutcome.Error.ToString());
+            _logger.Log("ProcessReady failure." + processReadyOutcome.Error.ToString());
          }
       }
       else
       {
-         print("InitSDK failure : " + initSDKOutcome.Error.ToString());
+         _logger.Log("InitSDK failure : " + initSDKOutcome.Error.ToString());
       }
    }
 

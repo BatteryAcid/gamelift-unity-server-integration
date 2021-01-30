@@ -1,19 +1,18 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Amazon;
 using Amazon.GameLift;
 using Amazon.GameLift.Model;
-using Amazon.Runtime.CredentialManagement;
 using Amazon.CognitoIdentity;
 
 // TODO: add error handling from example
-public class GameLiftClient // : MonoBehaviour
+public class GameLiftClient
 {
    private AmazonGameLiftClient _amazonGameLiftClient;
    private string _playerUuid;
+   private string CognitoIdentityPool = "us-east-1:78235852-4dff-4efa-988a-175041785b42";
+   private string FleetId = "fleet-bd8d3627-2e85-461a-b860-82f1e57771a3"; // TODO: probably don't hardcode this, use alias or something?
 
    public GameLiftClient()
    {
@@ -27,12 +26,12 @@ public class GameLiftClient // : MonoBehaviour
    {
       Debug.Log("setup");
       CreateGameLiftClient();
-      GameSession gameSession = await SearchGameSessions();
+      GameSession gameSession = await SearchGameSessionsAsync();
 
       if (gameSession == null)
       {
          // create one
-         gameSession = await CreateGameSession();
+         gameSession = await CreateGameSessionAsync();
          // TODO: check if this is null and add handling 
       }
    }
@@ -42,18 +41,18 @@ public class GameLiftClient // : MonoBehaviour
       Debug.Log("CreateGameLiftClient");
 
       CognitoAWSCredentials credentials = new CognitoAWSCredentials(
-         "us-east-1:78235852-4dff-4efa-988a-175041785b42", // Identity pool ID
-         RegionEndpoint.USEast1 // Region
+         CognitoIdentityPool,
+         RegionEndpoint.USEast1
       );
 
       _amazonGameLiftClient = new AmazonGameLiftClient(credentials, RegionEndpoint.USEast1);
    }
 
-   async private Task<GameSession> CreateGameSession()
+   async private Task<GameSession> CreateGameSessionAsync()
    {
       var createGameSessionRequest = new Amazon.GameLift.Model.CreateGameSessionRequest();
       //cgsreq.AliasId = aliasId;
-      createGameSessionRequest.FleetId = "fleet-4ca907ae-2dca-4968-83de-ceff527c6bb8"; // TODO: probably don't hardcode this, use alias or something?
+      createGameSessionRequest.FleetId = FleetId;
       createGameSessionRequest.CreatorId = _playerUuid;
       createGameSessionRequest.MaximumPlayerSessionCount = 4;
 
@@ -66,13 +65,13 @@ public class GameLiftClient // : MonoBehaviour
       return createGameSessionResponse.GameSession;
    }
 
-   async private Task<GameSession> SearchGameSessions()
+   async private Task<GameSession> SearchGameSessionsAsync()
    {
       Debug.Log("SearchGameSessions");
       var searchGameSessionsRequest = new SearchGameSessionsRequest();
 
       //searchGameSessionsRequest.AliasId = "TODO alias or fleet id i think"; // only our game
-      searchGameSessionsRequest.FleetId = "fleet-4ca907ae-2dca-4968-83de-ceff527c6bb8"; // TODO: probably don't hardcode this, use alias or something?
+      searchGameSessionsRequest.FleetId = FleetId;
       searchGameSessionsRequest.FilterExpression = "hasAvailablePlayerSessions=true"; // only ones we can join
       searchGameSessionsRequest.SortExpression = "creationTimeMillis ASC"; // return oldest first
       searchGameSessionsRequest.Limit = 1; // only one session even if there are other valid ones
